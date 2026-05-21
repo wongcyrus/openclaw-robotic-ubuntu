@@ -14,6 +14,26 @@ We have configured systemd **User Services with Linger**. This allows services t
 * **Goal:** Maintains a secure, passwordless local-to-remote SSH tunnel forwarding port `4000`.
 * **Key Used:** `~/.ssh/id_ed25519`
 
+> [!IMPORTANT]
+> **Passwordless SSH Login Setup:**  
+> Since systemd user services start automatically when Ubuntu boots up (without anyone logged in to enter a password), you must configure **passwordless SSH key-based authentication**:
+>
+> 1. **Generate your SSH Key Pair** on the host server:
+>    ```bash
+>    ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519
+>    ```
+> 2. **Copy your Public Key to the Remote Server**:
+>    ```bash
+>    ssh-copy-id -i ~/.ssh/id_ed25519.pub developer@192.168.249.129
+>    ```
+>    *(Replace `developer` and `192.168.249.129` with your target SSH server's username and IP).*
+> 3. **Verify Passwordless Access**:
+>    ```bash
+>    ssh -i ~/.ssh/id_ed25519 developer@192.168.249.129
+>    ```
+>    If this logs you in instantly without prompting for a password, your configuration is successful!
+
+
 ### 2. Xiaoice OpenClaw API Service
 * **Directory:** [xiaoice-openclaw-api](../xiaoice-openclaw-api)
 * **Service File:** `~/.config/systemd/user/xiaoice-openclaw-api.service`
