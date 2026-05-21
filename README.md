@@ -8,15 +8,15 @@ Welcome to your central workspace! This repository contains your utilities, scri
 
 We have configured systemd **User Services with Linger**. This allows services to start automatically as the `developer` user immediately when the machine boots, **even if no user logs in**.
 
-### 1. SSH Tunnel Service
-* **Script:** [ssh-tunnel.sh](../ssh-tunnel.sh)
-* **Service File:** `~/.config/systemd/user/ssh-tunnel.service`
+### 1. SSH Tunnel Service (Optional)
+* **Script:** [ssh-tunnel.sh](../ssh-tunnel.sh) (Only generated if configured)
+* **Service File:** `~/.config/systemd/user/ssh-tunnel.service` (Only generated if configured)
 * **Goal:** Maintains a secure, passwordless local-to-remote SSH tunnel forwarding port `4000`.
 * **Key Used:** `~/.ssh/id_ed25519`
 
-> [!IMPORTANT]
-> **Passwordless SSH Login Setup:**  
-> Since systemd user services start automatically when Ubuntu boots up (without anyone logged in to enter a password), you must configure **passwordless SSH key-based authentication**:
+> [!NOTE]
+> **Optional Setup:**  
+> This service is optional and can be skipped during the execution of `setup-new-server.sh`. If you choose to configure it, you must setup **passwordless SSH key-based authentication** for the background systemd daemon to function correctly without manual intervention on boot:
 >
 > 1. **Generate your SSH Key Pair** on the host server:
 >    ```bash
@@ -32,6 +32,7 @@ We have configured systemd **User Services with Linger**. This allows services t
 >    ssh -i ~/.ssh/id_ed25519 developer@192.168.249.129
 >    ```
 >    If this logs you in instantly without prompting for a password, your configuration is successful!
+
 
 
 ### 2. Xiaoice OpenClaw API Service

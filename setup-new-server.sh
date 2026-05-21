@@ -70,40 +70,52 @@ fi
 echo "🔗 Detected node binary directory: $NODE_BIN_DIR"
 
 echo "========================================="
-echo "🔑 4. SSH Key & ssh-tunnel.sh Setup..."
+echo "🔑 4. SSH Key & ssh-tunnel.sh Setup (Optional)..."
 echo "========================================="
-# Check if key exists, generate if missing
-if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
-    echo "🔑 Generating secure Ed25519 SSH key pair..."
-    mkdir -p "$HOME/.ssh"
-    chmod 700 "$HOME/.ssh"
-    ssh-keygen -t ed25519 -N "" -f "$HOME/.ssh/id_ed25519"
-else
-    echo "✅ Existing SSH key pair found."
-fi
+read -p "Do you want to configure SSH Tunnel? (y/N) [default: n]: " SETUP_SSH
+SETUP_SSH=${SETUP_SSH:-n}
 
-# Prompt for SSH Tunnel details or use defaults
-read -p "Enter remote server IP for SSH Tunnel [default: 192.168.249.129]: " REMOTE_IP
-REMOTE_IP=${REMOTE_IP:-192.168.249.129}
+# Initialize variables to avoid unbound variable errors if set -u is used
+REMOTE_IP=""
+REMOTE_USER=""
 
-read -p "Enter remote SSH user [default: developer]: " REMOTE_USER
-REMOTE_USER=${REMOTE_USER:-developer}
+if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
+    # Check if key exists, generate if missing
+    if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+        echo "🔑 Generating secure Ed25519 SSH key pair..."
+        mkdir -p "$HOME/.ssh"
+        chmod 700 "$HOME/.ssh"
+        ssh-keygen -t ed25519 -N "" -f "$HOME/.ssh/id_ed25519"
+    else
+        echo "✅ Existing SSH key pair found."
+    fi
 
-# Create ssh-tunnel.sh
-echo "📝 Creating ssh-tunnel.sh..."
-cat << EOF > "$WORKSPACE_DIR/ssh-tunnel.sh"
+    # Prompt for SSH Tunnel details or use defaults
+    read -p "Enter remote server IP for SSH Tunnel [default: 192.168.249.129]: " REMOTE_IP
+    REMOTE_IP=${REMOTE_IP:-192.168.249.129}
+
+    read -p "Enter remote SSH user [default: developer]: " REMOTE_USER
+    REMOTE_USER=${REMOTE_USER:-developer}
+
+    # Create ssh-tunnel.sh
+    echo "📝 Creating ssh-tunnel.sh..."
+    cat << EOF > "$WORKSPACE_DIR/ssh-tunnel.sh"
 #!/bin/bash
 ssh -N -L 4000:localhost:4000 -i \$HOME/.ssh/id_ed25519 ${REMOTE_USER}@${REMOTE_IP}
 EOF
-chmod +x "$WORKSPACE_DIR/ssh-tunnel.sh"
+    chmod +x "$WORKSPACE_DIR/ssh-tunnel.sh"
+else
+    echo "⏭️ Skipping SSH Key & SSH Tunnel setup..."
+fi
 
 echo "========================================="
 echo "⚙️ 5. Generating Systemd User Services..."
 echo "========================================="
 
 # --- 1. ssh-tunnel.service ---
-echo "⚙️ Generating ssh-tunnel.service..."
-cat << EOF > "$SYSTEMD_USER_DIR/ssh-tunnel.service"
+if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
+    echo "⚙️ Generating ssh-tunnel.service..."
+    cat << EOF > "$SYSTEMD_USER_DIR/ssh-tunnel.service"
 [Unit]
 Description=SSH Tunnel Service
 After=network-online.target
@@ -119,6 +131,7 @@ RestartSec=10
 [Install]
 WantedBy=default.target
 EOF
+fi
 
 # --- 2. xiaoice-openclaw-api.service ---
 echo "⚙️ Generating xiaoice-openclaw-api.service..."
@@ -213,12 +226,15 @@ loginctl enable-linger "$USER"
 systemctl --user daemon-reload
 
 SERVICES=(
-    "ssh-tunnel.service"
     "xiaoice-openclaw-api.service"
     "openclaw-character-dashboard.service"
     "claw3d.service"
     "domain-expansion-ar-game.service"
 )
+
+if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
+    SERVICES+=("ssh-tunnel.service")
+fi
 
 for svc in "${SERVICES[@]}"; do
     echo "⚡ Enabling and Starting $svc..."
@@ -229,8 +245,11 @@ done
 echo "========================================================================"
 echo "🎉 Setup Complete!"
 echo "========================================================================"
-echo "⚠️ IMPORTANT MANUAL STEP:"
-echo "Before the SSH Tunnel starts working, you MUST copy your new SSH public key"
-echo "to the remote server by running this command:"
-echo "  ssh-copy-id -i ~/.ssh/id_ed25519.pub ${REMOTE_USER}@${REMOTE_IP}"
-echo "========================================================================"
+
+if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
+    echo "⚠️ IMPORTANT MANUAL STEP:"
+    echo "Before the SSH Tunnel starts working, you MUST copy your new SSH public key"
+    echo "to the remote server by running this command:"
+    echo "  ssh-copy-id -i ~/.ssh/id_ed25519.pub ${REMOTE_USER}@${REMOTE_IP}"
+    echo "========================================================================"
+fi
