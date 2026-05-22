@@ -70,6 +70,25 @@ fi
 echo "🔗 Detected node binary directory: $NODE_BIN_DIR"
 
 echo "========================================="
+echo "🎙️ 3.5. Local Speech-to-Text (Whisper) Setup..."
+echo "========================================="
+# Install ffmpeg if not installed
+if ! command -v ffmpeg &> /dev/null; then
+    echo "📥 Installing system dependency ffmpeg (requires sudo)..."
+    sudo apt-get update && sudo apt-get install -y ffmpeg
+else
+    echo "✅ ffmpeg is already installed."
+fi
+
+# Install openai-whisper if not installed
+if ! command -v whisper &> /dev/null; then
+    echo "📥 Installing openai-whisper python package..."
+    pip3 install --user openai-whisper --break-system-packages
+else
+    echo "✅ whisper command is already installed."
+fi
+
+echo "========================================="
 echo "🔑 4. SSH Key & ssh-tunnel.sh Setup (Optional)..."
 echo "========================================="
 read -p "Do you want to configure SSH Tunnel? (y/N) [default: n]: " SETUP_SSH
