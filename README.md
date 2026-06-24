@@ -4,6 +4,31 @@ Welcome to your central workspace! This repository contains your utilities, scri
 
 ---
 
+## 🔑 Environment Variables for Systemd (Method 2)
+
+Systemd user services **do not** read variables from `~/.bashrc`. To manage environment variables (like `MCP_SERVER_URL`) globally across all user services, we use Systemd environment configuration files.
+
+### 1. Set Up Your Variables
+Create or edit your custom environment file:
+```bash
+mkdir -p ~/.config/environment.d
+nano ~/.config/environment.d/mcp.conf
+```
+
+Add your variables using standard `KEY="VALUE"` syntax (**Do not use `export`**):
+```text
+MCP_SERVER_URL="https://amazonaws.com"
+```
+
+### 2. Apply Changes
+Whenever you modify files in `~/.config/environment.d/`, you must reload the user daemon and restart the affected services to apply the new values:
+```bash
+systemctl --user daemon-reload
+systemctl --user restart domain-expansion-ar-game.service
+```
+
+---
+
 ## 🚀 Configured Auto-Start Services (Systemd)
 
 We have configured systemd **User Services with Linger**. This allows services to start automatically as the `developer` user immediately when the machine boots, **even if no user logs in**.
@@ -32,8 +57,6 @@ We have configured systemd **User Services with Linger**. This allows services t
 >    ssh -i ~/.ssh/id_ed25519 developer@192.168.249.129
 >    ```
 >    If this logs you in instantly without prompting for a password, your configuration is successful!
-
-
 
 ### 2. Xiaoice OpenClaw API Service
 * **Directory:** [xiaoice-openclaw-api](../xiaoice-openclaw-api)

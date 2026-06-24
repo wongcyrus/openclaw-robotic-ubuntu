@@ -7,20 +7,23 @@
 # 1. Cloning all relevant workspace git repositories.
 # 2. Installing NVM and Node.js v22.22.3 (if not installed).
 # 3. Generating the SSH Tunnel configuration.
-# 4. Creating and enabling all 4 Systemd User Services.
-# 5. Enabling Systemd Linger for the current user (auto-runs services on boot).
+# 4. Configuring Systemd User Environment variables (environment.d).
+# 5. Generating the 5 Systemd User Services.
+# 6. Enabling Systemd Linger for the current user (auto-runs services on boot).
 # ==============================================================================
 
 set -euo pipefail
 
 WORKSPACE_DIR="$HOME/Documents"
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+SYSTEMD_ENV_DIR="$HOME/.config/environment.d"
 
 echo "========================================="
-echo "📁 1. Creating Workspace Directory..."
+echo "📁 1. Creating Workspace & Config Directories..."
 echo "========================================="
 mkdir -p "$WORKSPACE_DIR"
 mkdir -p "$SYSTEMD_USER_DIR"
+mkdir -p "$SYSTEMD_ENV_DIR"
 
 echo "========================================="
 echo "🌐 2. Cloning Workspace Git Repositories..."
@@ -128,6 +131,18 @@ else
 fi
 
 echo "========================================="
+echo "🌍 4.5. Configuring Systemd User Environment Variables..."
+echo "========================================="
+DEFAULT_MCP="https://amazonaws.com"
+read -p "Enter MCP_SERVER_URL [default: $DEFAULT_MCP]: " INPUT_MCP
+INPUT_MCP=${INPUT_MCP:-$DEFAULT_MCP}
+
+echo "📝 Generating $SYSTEMD_ENV_DIR/mcp.conf..."
+cat << EOF > "$SYSTEMD_ENV_DIR/mcp.conf"
+MCP_SERVER_URL="$INPUT_MCP"
+EOF
+
+echo "========================================="
 echo "⚙️ 5. Generating Systemd User Services..."
 echo "========================================="
 
@@ -219,17 +234,16 @@ echo "⚙️ Generating domain-expansion-ar-game.service..."
 cat << EOF > "$SYSTEMD_USER_DIR/domain-expansion-ar-game.service"
 [Unit]
 Description=Domain Expansion AR Game Service
-After=docker.service network-online.target
-Wants=docker.service network-online.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
+Type=simple
 WorkingDirectory=$WORKSPACE_DIR/amazon-nova-robotics/domain-expansion-ar-game
-ExecStartPre=/usr/bin/bash -c 'until /usr/bin/docker info >/dev/null 2>&1; do sleep 1; done'
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
-Restart=no
+Environment="PATH=$NODE_BIN_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PORT=3443"
+ExecStart=$NODE_BIN_DIR/npm start
+Restart=on-failure
 
 [Install]
 WantedBy=default.target
@@ -238,12 +252,15 @@ EOF
 echo "========================================="
 echo "⚡ 6. Activating Services & Enabling Linger..."
 echo "========================================="
-# Enable linger
+# Enable linger to keep services running without active login session
+echo "👤 Enabling systemd linger for user: $USER..."
 loginctl enable-linger "$USER"
 
-# Reload, enable, and start services
+# Reload user systemd manager configuration
+echo "🔄 Reloading systemd user daemon..."
 systemctl --user daemon-reload
 
+# Define services array for automated activation loop
 SERVICES=(
     "xiaoice-openclaw-api.service"
     "openclaw-character-dashboard.service"
@@ -255,20 +272,14 @@ if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
     SERVICES+=("ssh-tunnel.service")
 fi
 
-for svc in "${SERVICES[@]}"; do
-    echo "⚡ Enabling and Starting $svc..."
-    systemctl --user enable "$svc"
-    systemctl --user start "$svc" || echo "Warning: Failed to start $svc immediately (might need manual project setups like docker build or npm install first)."
+# Enable and start each configured service
+for service in "${SERVICES[@]}"; do
+    echo "🚀 Enabling and starting $service..."
+    systemctl --user enable "$service"
+    systemctl --user start "$service"
 done
 
-echo "========================================================================"
-echo "🎉 Setup Complete!"
-echo "========================================================================"
-
-if [[ "$SETUP_SSH" =~ ^[Yy]$ ]]; then
-    echo "⚠️ IMPORTANT MANUAL STEP:"
-    echo "Before the SSH Tunnel starts working, you MUST copy your new SSH public key"
-    echo "to the remote server by running this command:"
-    echo "  ssh-copy-id -i ~/.ssh/id_ed25519.pub ${REMOTE_USER}@${REMOTE_IP}"
-    echo "========================================================================"
-fi
+echo "========================================="
+echo "🎉 Setup Complete! All services are active."
+echo "========================================="
+systemctl --user status domain-expansion-ar-game.service --no-pager
