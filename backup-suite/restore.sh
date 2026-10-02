@@ -55,8 +55,12 @@ if [[ $# -ge 1 ]]; then
 else
     # Interactive selection from BACKUP_DIR
     if [[ ! -d "$BACKUP_DIR" ]]; then
-        log_error "Backup storage directory ${BACKUP_DIR} does not exist."
-        exit 1
+        if [[ -d "$HOME/openclaw-backup-archives" ]]; then
+            BACKUP_DIR="$HOME/openclaw-backup-archives"
+        else
+            log_error "Backup storage directory ${BACKUP_DIR} does not exist."
+            exit 1
+        fi
     fi
     
     # List backups

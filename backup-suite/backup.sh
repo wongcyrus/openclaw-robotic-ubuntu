@@ -50,7 +50,12 @@ if [[ ! -d "$OPENCLAW_DIR" ]]; then
 fi
 
 # Ensure backup storage directory exists
-mkdir -p "$BACKUP_DIR"
+if ! mkdir -p "$BACKUP_DIR" 2>/dev/null; then
+    FALLBACK_DIR="$HOME/openclaw-backup-archives"
+    log_warn "Target BACKUP_DIR ($BACKUP_DIR) is not writable. Falling back to: $FALLBACK_DIR"
+    BACKUP_DIR="$FALLBACK_DIR"
+    mkdir -p "$BACKUP_DIR"
+fi
 
 # Resolve directories to absolute paths
 OPENCLAW_DIR="$(cd "$OPENCLAW_DIR" && pwd)"

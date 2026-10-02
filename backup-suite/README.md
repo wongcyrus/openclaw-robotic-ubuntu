@@ -28,18 +28,18 @@ To ensure agent configuration states can be completely restored without copying 
 
 The backup suite consists of 5 files in this directory:
 
-1. **[`backup.conf`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/backup.conf):** Configuration file containing paths, exclusions, retention limits, and optional GPG encryption options.
-2. **[`backup.sh`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/backup.sh):** The main backup script that parses configurations, archives files using custom tar settings, sets secure file permissions (`chmod 600`), and prunes older archives.
-3. **[`restore.sh`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/restore.sh):** Interactive recovery script. Lists available backups, creates a **safety rollback copy** of current settings before extracting, and cleanly restores the config.
-4. **[`git-sync-blueprints.sh`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/git-sync-blueprints.sh):** Keeps an elegant version history of your agent markdown configurations. Configures `.gitignore` exclusions and commits workspace blueprint changes automatically.
-5. **[`setup.sh`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/setup.sh):** Setup wizard. Automates cron job configuration and tests execution.
+1. **[`backup.conf`](./backup.conf):** Configuration file containing paths, exclusions, retention limits, and optional GPG encryption options.
+2. **[`backup.sh`](./backup.sh):** The main backup script that parses configurations, archives files using custom tar settings, sets secure file permissions (`chmod 600`), and prunes older archives.
+3. **[`restore.sh`](./restore.sh):** Interactive recovery script. Lists available backups, creates a **safety rollback copy** of current settings before extracting, and cleanly restores the config.
+4. **[`git-sync-blueprints.sh`](./git-sync-blueprints.sh):** Keeps an elegant version history of your agent markdown configurations. Configures `.gitignore` exclusions and commits workspace blueprint changes automatically.
+5. **[`setup.sh`](./setup.sh):** Setup wizard. Automates cron job configuration and tests execution.
 
 ---
 
 ## 🚀 Getting Started
 
 ### 1. Configure Settings
-Open [`backup.conf`](file:///home/developer/.gemini/antigravity-cli/scratch/openclaw-backups/backup.conf) to review paths and retention settings. By default, it saves archives to `/home/developer/openclaw-backup-archives/` and prunes archives older than `14` days.
+Open [`backup.conf`](./backup.conf) to review paths and retention settings. By default, it saves archives to `~/openclaw-backup-archives/` and prunes archives older than `14` days.
 
 ### 2. Run Setup Wizard
 To install automatic backup schedules, run:
